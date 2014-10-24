@@ -167,9 +167,10 @@ class NexmoMessage {
 	/**
 	 * Prepare and send a new message.
 	 */
-	protected function sendRequest ( $data ) {
+	protected function sendRequest ( $data, $uri = null ) {
 		// Build the post data
-		$data = array_merge($data, array($this->$nx_key_varname => $this->nx_key, $this->nx_secret_varname => $this->nx_secret));
+		$data = array_merge($data, array($this->nx_key_varname => $this->nx_key, $this->nx_secret_varname => $this->nx_secret));
+        $uri = !empty($uri) ? $uri : $this->nx_uri;
 		$post = '';
 		foreach($data as $k => $v){
 			$post .= "&$k=$v";
@@ -178,7 +179,7 @@ class NexmoMessage {
 		// If available, use CURL
 		if (function_exists('curl_version')) {
 
-			$to_nexmo = curl_init( $this->nx_uri );
+			$to_nexmo = curl_init( $uri );
 			curl_setopt( $to_nexmo, CURLOPT_POST, true );
 			curl_setopt( $to_nexmo, CURLOPT_RETURNTRANSFER, true );
 			curl_setopt( $to_nexmo, CURLOPT_POSTFIELDS, $post );
@@ -201,7 +202,7 @@ class NexmoMessage {
 				)
 			);
 			$context = stream_context_create($opts);
-			$from_nexmo = file_get_contents($this->nx_uri, false, $context);
+			$from_nexmo = file_get_contents($uri, false, $context);
 
 		} else {
 			// No way of sending a HTTP post :(
@@ -250,6 +251,7 @@ class NexmoMessage {
 	 * Parse server response.
 	 */
 	private function nexmoParse ( $from_nexmo ) {
+
 		$response = json_decode($from_nexmo);
 
 		// Copy the response data into an object, removing any '-' characters from the key
@@ -259,15 +261,18 @@ class NexmoMessage {
 			$this->nexmo_response = $response_obj;
 
 			// Find the total cost of this message
-			$response_obj->cost = $total_cost = 0;
-			if (is_array($response_obj->messages)) {
+            if (property_exists($response_obj, 'cost'))
+			    $response_obj->cost = $total_cost = 0;
+
+			if (property_exists($response_obj, 'messages') && is_array($response_obj->messages)) {
 				foreach ($response_obj->messages as $msg) {
 					if (property_exists($msg, "messageprice")) {
 						$total_cost = $total_cost + (float)$msg->messageprice;
 					}
 				}
 
-				$response_obj->cost = $total_cost;
+                if (property_exists($response_obj, 'cost'))
+				    $response_obj->cost = $total_cost;
 			}
 
 			return $response_obj;

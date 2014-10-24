@@ -17,7 +17,7 @@ class NexmoVerify extends NexmoMessage {
     {
         $post = [];
         if ($from !== null && !is_numeric($from) && !mb_check_encoding($from, 'UTF-8') ) {
-            trigger_error('$from needs to be a valid UTF-8 encoded string');
+            error_log('$from needs to be a valid UTF-8 encoded string');
             return false;
         }
         else {
@@ -39,18 +39,19 @@ class NexmoVerify extends NexmoMessage {
 
         if ($response === false || empty($response) || !property_exists($response, 'status'))
         {
-            trigger_error('[NEXMO] Invalid response received from server');
+            error_log('[NEXMO] Invalid response received from server');
             return false;
         }
 
         if ($response->status != 0)
         {
-            trigger_error('[NEXMO] Error response received from server: ' . $response->error_text);
+            error_log('[NEXMO] Error response received from server: ' . $response->error_text);
             return false;
         }
 
         return $response->request_id;
     }
+
 
     public function checkVerify($request_id, $code, $ip_address = null)
     {
@@ -65,17 +66,17 @@ class NexmoVerify extends NexmoMessage {
         else if (isset($_SERVER['REMOTE_ADDR']) && !empty($_SERVER['REMOTE_ADDR']))
             $post['ip_address'] = $_SERVER['REMOTE_ADDR'];
 
-        $response = $this->sendRequest ( $post );
+        $response = $this->sendRequest ( $post, 'https://api.nexmo.com/verify/check/json' );
 
         if ($response === false || empty($response) || !property_exists($response, 'status'))
         {
-            trigger_error('[NEXMO] Invalid response received from server');
+            error_log('[NEXMO] Invalid response received from server');
             return false;
         }
 
         if ($response->status != 0)
         {
-            trigger_error('[NEXMO] Error response received from server: ' . $response->error_text);
+            error_log('[NEXMO] Error response received from server: ' . $response->error_text);
             return false;
         }
 
