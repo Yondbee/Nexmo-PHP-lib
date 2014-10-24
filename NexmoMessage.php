@@ -22,6 +22,9 @@ class NexmoMessage {
 	private $nx_key = '';
 	private $nx_secret = '';
 
+    protected $nx_key_varname = 'username';
+    protected $nx_secret_varname = 'password';
+
 	/**
 	 * @var string Nexmo server URI
 	 *
@@ -164,9 +167,9 @@ class NexmoMessage {
 	/**
 	 * Prepare and send a new message.
 	 */
-	private function sendRequest ( $data ) {
+	protected function sendRequest ( $data ) {
 		// Build the post data
-		$data = array_merge($data, array('username' => $this->nx_key, 'password' => $this->nx_secret));
+		$data = array_merge($data, array($this->$nx_key_varname => $this->nx_key, $this->nx_secret_varname => $this->nx_secret));
 		$post = '';
 		foreach($data as $k => $v){
 			$post .= "&$k=$v";
@@ -285,7 +288,7 @@ class NexmoMessage {
 	 * whilst stinging you with the financial cost! While this cannot correct them, it
 	 * will try its best to correctly format them.
 	 */
-	private function validateOriginator($inp){
+	protected function validateOriginator($inp){
 		// Remove any invalid characters
 		$ret = preg_replace('/[^a-zA-Z0-9]/', '', (string)$inp);
 

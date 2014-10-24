@@ -1,5 +1,5 @@
 {
-    "name": "wmather/nexmo-php-lib",
+    "name": "andreasanta/nexmo-php-lib",
     "require": {
         "php": ">=5.3.0"
     },
