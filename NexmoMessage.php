@@ -176,39 +176,45 @@ class NexmoMessage {
 			$post .= "&$k=$v";
 		}
 
-		// If available, use CURL
-		if (function_exists('curl_version')) {
+		try {
 
-			$to_nexmo = curl_init( $uri );
-			curl_setopt( $to_nexmo, CURLOPT_POST, true );
-			curl_setopt( $to_nexmo, CURLOPT_RETURNTRANSFER, true );
-			curl_setopt( $to_nexmo, CURLOPT_POSTFIELDS, $post );
+			// If available, use CURL
+			if (function_exists('curl_version')) {
 
-			if (!$this->ssl_verify) {
-				curl_setopt( $to_nexmo, CURLOPT_SSL_VERIFYPEER, false);
+				$to_nexmo = curl_init( $uri );
+				curl_setopt( $to_nexmo, CURLOPT_POST, true );
+				curl_setopt( $to_nexmo, CURLOPT_RETURNTRANSFER, true );
+				curl_setopt( $to_nexmo, CURLOPT_POSTFIELDS, $post );
+
+				if (!$this->ssl_verify) {
+					curl_setopt( $to_nexmo, CURLOPT_SSL_VERIFYPEER, false);
+				}
+
+				$from_nexmo = curl_exec( $to_nexmo );
+				curl_close ( $to_nexmo );
+
+			} elseif (ini_get('allow_url_fopen')) {
+				// No CURL available so try the awesome file_get_contents
+
+				$opts = array('http' =>
+					array(
+						'method'  => 'POST',
+						'header'  => 'Content-type: application/x-www-form-urlencoded',
+						'content' => $post
+					)
+				);
+				$context = stream_context_create($opts);
+				$from_nexmo = file_get_contents($uri, false, $context);
+
+			} else {
+				// No way of sending a HTTP post :(
+				return false;
 			}
-
-			$from_nexmo = curl_exec( $to_nexmo );
-			curl_close ( $to_nexmo );
-
-		} elseif (ini_get('allow_url_fopen')) {
-			// No CURL available so try the awesome file_get_contents
-
-			$opts = array('http' =>
-				array(
-					'method'  => 'POST',
-					'header'  => 'Content-type: application/x-www-form-urlencoded',
-					'content' => $post
-				)
-			);
-			$context = stream_context_create($opts);
-			$from_nexmo = file_get_contents($uri, false, $context);
-
-		} else {
-			// No way of sending a HTTP post :(
-			return false;
 		}
-
+		catch (\Exception $e)
+		{
+			error_log('[SMS] Error while contacting nexmo ' . $e->getMessage());
+		}
 		
 		return $this->nexmoParse( $from_nexmo );
 	 
@@ -219,10 +225,20 @@ class NexmoMessage {
 	 * Recursively normalise any key names in an object, removing unwanted characters
 	 */
 	private function normaliseKeys ($obj) {
+
+		// empty obj does nothing
+		if (empty($obj))
+			return new stdClass();
+
 		// Determine is working with a class or araay
 		if ($obj instanceof stdClass) {
 			$new_obj = new stdClass();
 			$is_obj = true;
+		}
+		else if (is_string($obj))
+		{
+			// map to empty object
+			return new stdClass();
 		} else {
 			$new_obj = array();
 			$is_obj = false;
