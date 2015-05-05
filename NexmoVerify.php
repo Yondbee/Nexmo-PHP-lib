@@ -82,4 +82,66 @@ class NexmoVerify extends NexmoMessage {
 
         return true;
     }
-} 
+
+    /**
+     * @param string$request_id
+     * @return array|bool|stdClass
+     */
+    public function searchRequest($request_id)
+    {
+        $post = [
+            'request_id' => $request_id
+        ];
+
+        $response = $this->sendRequest ( $post, 'https://api.nexmo.com/verify/search/json' );
+        error_log('[NEXMO] Search response from server ' . print_r($response, true));
+
+        if ($response === false || empty($response) || !property_exists($response, 'status'))
+        {
+            error_log('[NEXMO] Invalid response received from server');
+            return false;
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param string $request_id
+     * @return bool
+     */
+    public function getRequestStatus($request_id)
+    {
+        $r = $this->searchRequest($request_id);
+
+        return $r ? $r->status : false;
+    }
+
+    /**
+     * Cancel a verification
+     *
+     * @param string $request_id
+     * @return bool
+     */
+    public function cancelVerify($request_id) {
+        $post = [
+            'request_id' => $request_id,
+            'cmd' => 'cancel'
+        ];
+
+        $response = $this->sendRequest($post, 'https://api.nexmo.com/verify/check/json');
+
+        if ($response === false || empty($response) || !property_exists($response, 'status'))
+        {
+            error_log('[NEXMO] Invalid response received from server');
+            return false;
+        }
+
+        if ($response->status != 0)
+        {
+            error_log('[NEXMO] Error response received from server: ' . $response->error_text);
+            return false;
+        }
+
+        return true;
+    }
+}
