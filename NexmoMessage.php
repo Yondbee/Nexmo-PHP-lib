@@ -22,8 +22,8 @@ class NexmoMessage {
 	private $nx_key = '';
 	private $nx_secret = '';
 
-    protected $nx_key_varname = 'username';
-    protected $nx_secret_varname = 'password';
+    protected $nx_key_varname = 'api_key';
+    protected $nx_secret_varname = 'api_secret';
 
 	/**
 	 * @var string Nexmo server URI
