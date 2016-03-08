@@ -221,7 +221,6 @@ class NexmoMessage {
 
 
         error_log('[NEXMO] Raw nexmo response ' . $from_nexmo);
-
 		return $this->nexmoParse( $from_nexmo );
 
 	}
