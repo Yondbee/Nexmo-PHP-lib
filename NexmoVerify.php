@@ -12,7 +12,7 @@ class NexmoVerify extends NexmoMessage {
         $this->nx_secret_varname = 'api_secret';
     }
 
-    public function sendVerify($to, $brand, $from = null, $code_length = null, $lg = null)
+    public function sendVerify($to, $brand, $from = null, $code_length = null, $lg = null, $disable_call = false)
     {
         $post = [];
         if ($from !== null && !is_numeric($from) && !mb_check_encoding($from, 'UTF-8') ) {
@@ -33,6 +33,9 @@ class NexmoVerify extends NexmoMessage {
 
         if (!empty($lg))
             $post['lg'] = $lg;
+            
+        if ($disable_call)
+	        $post['avoid_voice_call'] = true;
 
         $response = $this->sendRequest ( $post );
 
